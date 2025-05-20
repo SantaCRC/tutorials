@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Module name="sipeed_tang_nano_9k" Register="783" Alu="141" Lut="1294" Bsram="4" Ssram="4">
-    <SubModule name="VexRiscv" Register="1089" Alu="237" Lut="2204" MULT18X18="4" ALU54D="2" Bsram="2">
-        <SubModule name="IBusCachedPlugin_cache" Register="75" Alu="26" Lut="47" Bsram="3"/>
-        <SubModule name="dataCache_1" Register="61" Alu="39" Lut="109" Bsram="5"/>
-    </SubModule>
-</Module>
