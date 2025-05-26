@@ -107,29 +107,6 @@ class BaseSoC(SoCCore):
                 self.vtg.source.connect(self.sprite_pattern.vtg_sink),
                 self.sprite_pattern.source.connect(self.videophy.sink)
             ]
-            # with open("tiles.mem") as f:
-            #     my_tiles_rgb_data = [int(line.strip(), 16) for line in f if line.strip()]
-
-            # self.videophy = VideoGowinHDMIPHY(platform.request("hdmi"), clock_domain="hdmi")
-            # self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@75Hz")
-
-            # tilemap_size = 40 * 30
-            # self.tilemap_ram = wishbone.SRAM(tilemap_size, read_only=False)
-            # self.bus.add_slave("tilemap", self.tilemap_ram.bus, SoCRegion(origin=0x40800000, size=tilemap_size))
-
-            # self.submodules.tilemap_renderer = TilemapRenderer(
-            #     tilemap_bus=self.tilemap_ram.bus,
-            #     tile_rom_data=my_tiles_rgb_data,
-            #     screen_w=640,
-            #     screen_h=480,
-            #     tile_w=16,
-            #     tile_h=16
-            # )
-
-            # self.comb += [
-            #     self.vtg.source.connect(self.tilemap_renderer.vtg_sink),
-            #     self.tilemap_renderer.source.connect(self.videophy.sink)
-            # ]
 
         if with_led_chaser:
             self.leds = LedChaser(

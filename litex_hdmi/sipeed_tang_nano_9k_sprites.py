@@ -15,7 +15,7 @@ from litex.soc.cores.video import *
 from litex.soc.cores.hyperbus import HyperRAM
 from litex.soc.cores.gpio import GPIOTristate
 from litex.soc.interconnect import wishbone
-from patterns import MovingSpritePatternFromFile
+from patterns import BarsRenderer
 
 class _CRG(LiteXModule):
     def __init__(self, platform, sys_clk_freq, with_video_pll=True):
@@ -54,7 +54,6 @@ class BaseSoC(SoCCore):
         self.crg = _CRG(platform, sys_clk_freq, with_video_pll=with_video_terminal)
 
         kwargs["integrated_rom_size"] = 0
-        kwargs["uart_name"] = "serial"
         SoCCore.__init__(self, platform, sys_clk_freq, ident="LiteX SoC on Tang Nano 9K HDMI", **kwargs)
 
         from litespi.modules import W25Q32
@@ -97,32 +96,32 @@ class BaseSoC(SoCCore):
 
             
             if with_video_terminal:
-                # 1) Instancia del PHY y generador de timing
-                self.videophy = VideoGowinHDMIPHY(platform.request("hdmi"), clock_domain="hdmi")
-                self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@75Hz")
+                # 1) Instancia el VTG y el PHY HDMI
+                self.submodules.vtg     = VideoTimingGenerator(default_video_timings="640x480@60Hz")
+                self.submodules.videophy= VideoGowinHDMIPHY(platform.request("hdmi"),
+                                                            clock_domain="hdmi")
 
-                # 2) Tu patrón movible, ya renombrado al dominio HDMI
-                self.submodules.video_pattern = ClockDomainsRenamer("hdmi")(
-                    MovingSpritePatternFromFile(hres=640, vres=480)
+                # 2) Después, carga tu tiles.mem y crea el renderer
+                with open("tiles.mem") as f:
+                    tile_rgb_data = [int(l.strip(), 16) for l in f if l.strip()]
+
+                self.submodules.bars = ClockDomainsRenamer("hdmi")(
+                    BarsRenderer(
+                        tile_rgb_data,
+                        screen_w=640, screen_h=480,
+                        tile_w=16,   tile_h=16
+                    )
                 )
 
-                # 3) “Shift” de vsync para alinear con el blanking (opcional)
+                # 3) Ahora desplaza VSYNC y conecta toda la cadena
                 vsync_shifted = Signal()
                 self.sync.hdmi += vsync_shifted.eq(self.vtg.source.vsync)
 
-                # 4) Conexión: primero timing → tu patrón (omitimos vsync original),
-                #    luego alimentamos el sink de la PHY con la salida de tu patrón
                 self.comb += [
-                    # conectamos todo excepto vsync
-                    self.vtg.source.connect(self.video_pattern.vtg_sink,
-                                            omit={"vsync"}),
-                    # inyectamos el vsync retardado
-                    self.video_pattern.vtg_sink.vsync.eq(vsync_shifted),
-                    # finalmente, vídeo “data” va a la salida HDMI
-                    self.video_pattern.source.connect(self.videophy.sink)
+                    self.vtg.source.connect(self.bars.vtg_sink, omit={"vsync"}),
+                    self.bars.vtg_sink.vsync.eq(vsync_shifted),
+                    self.bars.source.connect(self.videophy.sink),
                 ]
-
-
 
         if with_led_chaser:
             self.leds = LedChaser(
