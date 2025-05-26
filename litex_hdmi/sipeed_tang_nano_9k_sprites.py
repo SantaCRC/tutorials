@@ -95,22 +95,33 @@ class BaseSoC(SoCCore):
             self.bus.add_slave("main_ram", slave=self.hyperram.bus, region=SoCRegion(
                 origin=self.mem_map["main_ram"], size=4 * MEGABYTE, mode="rwx"))
 
-        if with_video_terminal:
-            try:
+            
+            if with_video_terminal:
+                # 1) Instancia del PHY y generador de timing
                 self.videophy = VideoGowinHDMIPHY(platform.request("hdmi"), clock_domain="hdmi")
-                self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@60Hz")
+                self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@75Hz")
 
+                # 2) Tu patrón movible, ya renombrado al dominio HDMI
                 self.submodules.video_pattern = ClockDomainsRenamer("hdmi")(
                     MovingSpritePatternFromFile(hres=640, vres=480)
                 )
 
+                # 3) “Shift” de vsync para alinear con el blanking (opcional)
+                vsync_shifted = Signal()
+                self.sync.hdmi += vsync_shifted.eq(self.vtg.source.vsync)
+
+                # 4) Conexión: primero timing → tu patrón (omitimos vsync original),
+                #    luego alimentamos el sink de la PHY con la salida de tu patrón
                 self.comb += [
-                    self.vtg.source.connect(self.video_pattern.vtg_sink),
+                    # conectamos todo excepto vsync
+                    self.vtg.source.connect(self.video_pattern.vtg_sink,
+                                            omit={"vsync"}),
+                    # inyectamos el vsync retardado
+                    self.video_pattern.vtg_sink.vsync.eq(vsync_shifted),
+                    # finalmente, vídeo “data” va a la salida HDMI
                     self.video_pattern.source.connect(self.videophy.sink)
                 ]
-            except Exception as e:
-                print(f"Video pattern init failed: {e}")
-                traceback.print_exc()
+
 
 
         if with_led_chaser:

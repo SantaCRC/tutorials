@@ -5,6 +5,53 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.video import video_timing_layout, video_data_layout
 from math import log2
 
+class WishboneReader(LiteXModule):
+    def __init__(self, bus, addr_width=32, data_width=32):
+        self.addr  = Signal(addr_width)
+        self.start = Signal()
+        self.data  = Signal(data_width)
+        self.ready = Signal()
+
+        self.bus = bus
+
+        # Internos
+        data_reg  = Signal(data_width)
+        ready_reg = Signal(reset=1)
+
+        self.fsm = fsm = FSM(reset_state="IDLE")
+        self.submodules += fsm
+
+        fsm.act("IDLE",
+            self.bus.stb.eq(0),
+            self.bus.cyc.eq(0),
+            If(self.start,
+                NextState("READ")
+            )
+        )
+
+        fsm.act("READ",
+            self.bus.stb.eq(1),
+            self.bus.cyc.eq(1),
+            self.bus.adr.eq(self.addr >> 2),
+            self.bus.sel.eq(0xf),
+            self.bus.we.eq(0),
+            If(self.bus.ack,
+                NextValue(data_reg, self.bus.dat_r),
+                NextValue(ready_reg, 1),
+                NextState("IDLE")
+            )
+        )
+
+        self.sync += If(fsm.ongoing("READ") & ~self.bus.ack,
+            ready_reg.eq(0)
+        )
+
+        self.comb += [
+            self.data.eq(data_reg),
+            self.ready.eq(ready_reg)
+        ]
+
+
 class TilemapRenderer(LiteXModule):
     def __init__(self, tilemap_data, tile_rom_data, screen_w=640, screen_h=480, tile_w=16, tile_h=16):
         self.vtg_sink = stream.Endpoint(video_timing_layout)
