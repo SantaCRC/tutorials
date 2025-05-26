@@ -168,9 +168,7 @@ def main():
 
     if args.flash:
         prog = soc.platform.create_programmer(kit=args.prog_kit)
-        prog.flash(0, builder.get_bitstream_filename(mode="flash", ext=".fs")) # FIXME
-        # Axternal SPI programming not supported by gowin 'programmer_cli' now!
-        # if needed, use openFPGALoader or Gowin programmer GUI
+        prog.flash(0, builder.get_bitstream_filename(mode="flash", ext=".fs"))
         if args.prog_kit == "openfpgaloader":
             prog.flash(int(args.bios_flash_offset, 0), builder.get_bios_filename(), external=True)
 
