@@ -142,8 +142,9 @@ class TilemapRenderer(LiteXModule):
 
 class BarsRenderer(LiteXModule):
     """
-    Dibuja 4 franjas verticales (una por columna de un tileset 4×4),
-    repitiendo cada bloque 16×16 a lo largo de toda la franja.
+    Dibuja N franjas verticales (una por cada tile de 16×16) en pantalla,
+    usando todo el tileset de tu ROM.
+    Cada franja repite el tile completo a lo largo de su ancho.
     """
     def __init__(self, tile_rom_data,
                  screen_w=640, screen_h=480,
@@ -156,10 +157,10 @@ class BarsRenderer(LiteXModule):
         pixels_per_tile = tile_w * tile_h
         total_pixels    = len(tile_rom_data)
         total_tiles     = total_pixels // pixels_per_tile
-        tiles_per_row   = isqrt(total_tiles)       # =4 si tu tileset es 4×4
-        stripe_width    = max(1, screen_w // tiles_per_row)
+        stripes_count   = total_tiles                          # uno por cada tile
+        stripe_width    = max(1, screen_w // stripes_count)    # ancho de cada franja
 
-        # Memorias RGB de todo el tileset
+        # Carga ROM RGB completa
         depth = total_pixels
         init_r = [(c >> 16) & 0xFF for c in tile_rom_data]
         init_g = [(c >>  8) & 0xFF for c in tile_rom_data]
@@ -172,19 +173,19 @@ class BarsRenderer(LiteXModule):
         port_b = rom_b.get_port(has_re=False)
         self.specials += rom_r, rom_g, rom_b, port_r, port_g, port_b
 
-        # Señales
-        h       = self.vtg_sink.hcount
-        v       = self.vtg_sink.vcount
-        mask_w  = tile_w - 1
-        mask_h  = tile_h - 1
+        # Señales de coordenadas
+        h = self.vtg_sink.hcount
+        v = self.vtg_sink.vcount
+        mask_w = tile_w - 1
+        mask_h = tile_h - 1
 
-        # Índice de franja (0..tiles_per_row-1) con Mux anidados
-        bar_idx = Signal(max=tiles_per_row)
-        self.comb += bar_idx.eq(
-            Mux(h >= 3*stripe_width, 3,
-            Mux(h >= 2*stripe_width, 2,
-            Mux(h >= 1*stripe_width, 1, 0)))
-        )
+        # Índice de franja (0..stripes_count-1) usando Mux encadenado
+        bar_idx = Signal(max=stripes_count)
+        expr = 0
+        # iterar de 1 a stripes_count-1
+        for i in range(1, stripes_count):
+            expr = Mux(h >= i * stripe_width, i, expr)
+        self.comb += bar_idx.eq(expr)
 
         # Dirección en ROM: bloque + offset dentro del bloque
         addr = Signal(max=depth)
@@ -194,20 +195,17 @@ class BarsRenderer(LiteXModule):
             (h & mask_w)
         )
 
-        # Conecta a los puertos y a la salida de video
+        # Conexión a puertos y salida de video
         self.comb += [
             port_r.adr.eq(addr),
             port_g.adr.eq(addr),
             port_b.adr.eq(addr),
-
             self.vtg_sink.connect(self.source,
                 keep={"valid","ready","last","de","hsync","vsync"}),
-
             self.source.r.eq(port_r.dat_r),
             self.source.g.eq(port_g.dat_r),
             self.source.b.eq(port_b.dat_r),
         ]
-
 
 
 class MovingSpritePatternFromFile(LiteXModule):
