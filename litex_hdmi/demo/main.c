@@ -147,38 +147,34 @@ static void donut_cmd(void)
 	donut();
 }
 
+
 static void helloc_cmd(void)
 {
-	printf("Hello C demo...\n");
+	printf("Hello C demo... (press 'q' to stop)\n");
 
 	bar_func_ptr bar_writes[16] = {
-    bars_start_0_write,
-    bars_start_1_write,
-    bars_start_2_write,
-    bars_start_3_write,
-    bars_start_4_write,
-    bars_start_5_write,
-    bars_start_6_write,
-    bars_start_7_write,
-    bars_start_8_write,
-    bars_start_9_write,
-    bars_start_10_write,
-    bars_start_11_write,
-    bars_start_12_write,
-    bars_start_13_write,
-    bars_start_14_write,
-    bars_start_15_write
-};
+		bars_start_0_write, bars_start_1_write, bars_start_2_write, bars_start_3_write,
+		bars_start_4_write, bars_start_5_write, bars_start_6_write, bars_start_7_write,
+		bars_start_8_write, bars_start_9_write, bars_start_10_write, bars_start_11_write,
+		bars_start_12_write, bars_start_13_write, bars_start_14_write, bars_start_15_write
+	};
 
-int offset = 0;
-while (1) {
-    for (int i = 0; i < 16; i++) {
-        bar_writes[i]((i * 40 + offset) % 640);
-    }
-    offset = (offset + 1) % 640;
-    for (volatile int j = 0; j < 100000; j++);
-}
+	int offset = 0;
+	while (1) {
+		if (readchar_nonblock()) {
+			char c = readchar();
+			if (c == 'q') break;  // salir si se presiona 'q'
+		}
 
+		for (int i = 0; i < 16; i++) {
+			bar_writes[i]((i * 40 + offset) % 640);
+		}
+		offset = (offset + 1) % 640;
+
+		for (volatile int j = 0; j < 100000; j++);
+	}
+
+	printf("\nhelloc terminado.\n");
 }
 
 #ifdef WITH_CXX
