@@ -2,7 +2,7 @@ main.o: main.c \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/tinystdio/stdio.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/inttypes.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/newlib.h \
- /home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h \
+ /home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/config.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/machine/ieeefp.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/features.h \
@@ -28,15 +28,15 @@ main.o: main.c \
  /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/irq.h \
  /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/system.h \
  /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h \
- /home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/generated/soc.h \
- /home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/generated/csr.h \
+ /home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/generated/soc.h \
+ /home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/generated/csr.h \
  /home/fabian/Documents/litex/litex/litex/soc/software/include/hw/common.h \
  /home/fabian/Documents/litex/litex/litex/soc/software/libbase/uart.h \
  /home/fabian/Documents/litex/litex/litex/soc/software/libbase/console.h
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/tinystdio/stdio.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/inttypes.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/newlib.h:
-/home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h:
+/home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/config.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/machine/ieeefp.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/features.h:
@@ -62,8 +62,8 @@ main.o: main.c \
 /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/irq.h:
 /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/system.h:
 /home/fabian/Documents/litex/litex/litex/soc/cores/cpu/vexriscv/csr-defs.h:
-/home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/generated/soc.h:
-/home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/generated/csr.h:
+/home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/generated/soc.h:
+/home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/generated/csr.h:
 /home/fabian/Documents/litex/litex/litex/soc/software/include/hw/common.h:
 /home/fabian/Documents/litex/litex/litex/soc/software/libbase/uart.h:
 /home/fabian/Documents/litex/litex/litex/soc/software/libbase/console.h:

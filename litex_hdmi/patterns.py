@@ -3,6 +3,7 @@ from migen.genlib.cdc import MultiReg
 from litex.gen import LiteXModule, log2_int
 from litex.soc.interconnect import stream
 from litex.soc.cores.video import video_timing_layout, video_data_layout
+from litex.soc.interconnect.csr import CSRStorage, AutoCSR
 import random
 from math import log2
 from math import isqrt
@@ -320,3 +321,77 @@ class MovingSpritePatternFromFile(LiteXModule):
                 self.source.b.eq(0)
             )
         )
+
+class BarsC(LiteXModule, AutoCSR):
+    """
+    Dibuja N franjas verticales (una por cada tile de 16×16) en pantalla,
+    usando todo el tileset de tu ROM. La posición de cada barra se controla
+    desde la CPU vía CSRs start_0…start_N-1.
+    """
+    def __init__(self, tile_rom_data,
+                 screen_w=640, screen_h=480,
+                 tile_w=16,   tile_h=16):
+        # Endpoints de video
+        self.vtg_sink = stream.Endpoint(video_timing_layout)
+        self.source   = stream.Endpoint(video_data_layout)
+
+        # Parámetros del tileset
+        pixels_per_tile = tile_w * tile_h
+        total_pixels    = len(tile_rom_data)
+        total_tiles     = total_pixels // pixels_per_tile
+
+        # Número de franjas = número de tiles
+        stripes_count = total_tiles
+
+        # Crear CSRs individualmente para cada franja
+        for i in range(stripes_count):
+            csr = CSRStorage(size=32,
+                             reset=i * (screen_w // stripes_count),
+                             name=f"start_{i}")
+            setattr(self, f"start_{i}", csr)
+        # Memorias RGB de todo el tileset
+        depth = total_pixels
+        init_r = [(c >> 16) & 0xFF for c in tile_rom_data]
+        init_g = [(c >>  8) & 0xFF for c in tile_rom_data]
+        init_b = [ c        & 0xFF for c in tile_rom_data]
+        rom_r = Memory(width=8, depth=depth, init=init_r)
+        rom_g = Memory(width=8, depth=depth, init=init_g)
+        rom_b = Memory(width=8, depth=depth, init=init_b)
+        port_r = rom_r.get_port(has_re=False)
+        port_g = rom_g.get_port(has_re=False)
+        port_b = rom_b.get_port(has_re=False)
+        self.specials += rom_r, rom_g, rom_b, port_r, port_g, port_b
+
+        # Señales de coordenadas
+        h = self.vtg_sink.hcount
+        v = self.vtg_sink.vcount
+        mask_w = tile_w - 1
+        mask_h = tile_h - 1
+
+        # Mux encadenado: busca el último i tal que h >= start_x[i]
+        bar_idx = Signal(max=stripes_count)
+        expr = 0
+        for i in range(stripes_count):
+            start_sig = getattr(self, f"start_{i}").storage
+            expr = Mux(h >= start_sig, i, expr)
+        self.comb += bar_idx.eq(expr)
+
+        # Dirección en ROM: bloque + offset dentro del bloque
+        addr = Signal(max=depth)
+        self.comb += addr.eq(
+            bar_idx * pixels_per_tile +
+            (v & mask_h) * tile_w +
+            (h & mask_w)
+        )
+
+        # Conexión a video
+        self.comb += [
+            port_r.adr.eq(addr),
+            port_g.adr.eq(addr),
+            port_b.adr.eq(addr),
+            self.vtg_sink.connect(self.source,
+                keep={"valid","ready","last","de","hsync","vsync"}),
+            self.source.r.eq(port_r.dat_r),
+            self.source.g.eq(port_g.dat_r),
+            self.source.b.eq(port_b.dat_r),
+        ]

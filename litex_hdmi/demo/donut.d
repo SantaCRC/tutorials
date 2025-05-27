@@ -2,7 +2,7 @@ donut.o: donut.c \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/tinystdio/stdio.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/inttypes.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/newlib.h \
- /home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h \
+ /home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/config.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/machine/ieeefp.h \
  /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/features.h \
@@ -28,7 +28,7 @@ donut.o: donut.c \
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/tinystdio/stdio.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/inttypes.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/newlib.h:
-/home/fabian/Documents/litex_demo/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h:
+/home/fabian/Documents/tutorials/litex_hdmi/build/sipeed_tang_nano_9k/software/include/../libc/picolibc.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/config.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/machine/ieeefp.h:
 /home/fabian/Documents/litex/pythondata-software-picolibc/pythondata_software_picolibc/data/newlib/libc/include/sys/features.h:

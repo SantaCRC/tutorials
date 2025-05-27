@@ -15,8 +15,7 @@ from litex.soc.cores.video import *
 from litex.soc.cores.hyperbus import HyperRAM
 from litex.soc.cores.gpio import GPIOTristate
 from litex.soc.interconnect import wishbone
-from patterns import BarsRenderer
-
+from patterns import BarsRenderer, BarsC
 class _CRG(LiteXModule):
     def __init__(self, platform, sys_clk_freq, with_video_pll=True):
         self.rst    = Signal()
@@ -106,7 +105,7 @@ class BaseSoC(SoCCore):
                     tile_rgb_data = [int(l.strip(), 16) for l in f if l.strip()]
 
                 self.submodules.bars = ClockDomainsRenamer("hdmi")(
-                    BarsRenderer(
+                    BarsC(
                         tile_rgb_data,
                         screen_w=640, screen_h=480,
                         tile_w=16,   tile_h=16
