@@ -15,7 +15,7 @@ from litex.soc.cores.video import *
 from litex.soc.cores.hyperbus import HyperRAM
 from litex.soc.cores.gpio import GPIOTristate
 from litex.soc.interconnect import wishbone
-from patterns import BarsRenderer, BarsC
+from patterns import BarsRenderer
 class _CRG(LiteXModule):
     def __init__(self, platform, sys_clk_freq, with_video_pll=True):
         self.rst    = Signal()
@@ -47,6 +47,7 @@ class BaseSoC(SoCCore):
     def __init__(self, toolchain="gowin", sys_clk_freq=27e6, bios_flash_offset=0x0,
         with_led_chaser=True,
         with_video_terminal=False,
+        hdmi_pattern="bars",
         **kwargs):
 
         platform = sipeed_tang_nano_9k.Platform(toolchain=toolchain)
@@ -95,32 +96,111 @@ class BaseSoC(SoCCore):
 
             
             if with_video_terminal:
-                # 1) Instancia el VTG y el PHY HDMI
-                self.submodules.vtg     = VideoTimingGenerator(default_video_timings="640x480@60Hz")
-                self.submodules.videophy= VideoGowinHDMIPHY(platform.request("hdmi"),
-                                                            clock_domain="hdmi")
+                if hdmi_pattern == "c":
+                    from patterns import BarsC
+                    # 1) Instancia el VTG y el PHY HDMI
+                    self.submodules.vtg     = VideoTimingGenerator(default_video_timings="640x480@60Hz")
+                    self.submodules.videophy= VideoGowinHDMIPHY(platform.request("hdmi"),
+                                                                clock_domain="hdmi")
 
-                # 2) Después, carga tu tiles.mem y crea el renderer
-                with open("tiles.mem") as f:
-                    tile_rgb_data = [int(l.strip(), 16) for l in f if l.strip()]
+                    # 2) Después, carga tu tiles.mem y crea el renderer
+                    with open("tiles.mem") as f:
+                        tile_rgb_data = [int(l.strip(), 16) for l in f if l.strip()]
 
-                self.submodules.bars = ClockDomainsRenamer("hdmi")(
-                    BarsC(
-                        tile_rgb_data,
-                        screen_w=640, screen_h=480,
-                        tile_w=16,   tile_h=16
+                    self.submodules.bars = ClockDomainsRenamer("hdmi")(
+                        BarsC(
+                            tile_rgb_data,
+                            screen_w=640, screen_h=480,
+                            tile_w=16,   tile_h=16
+                        )
                     )
-                )
 
-                # 3) Ahora desplaza VSYNC y conecta toda la cadena
-                vsync_shifted = Signal()
-                self.sync.hdmi += vsync_shifted.eq(self.vtg.source.vsync)
+                    # 3) Ahora desplaza VSYNC y conecta toda la cadena
+                    vsync_shifted = Signal()
+                    self.sync.hdmi += vsync_shifted.eq(self.vtg.source.vsync)
 
-                self.comb += [
-                    self.vtg.source.connect(self.bars.vtg_sink, omit={"vsync"}),
-                    self.bars.vtg_sink.vsync.eq(vsync_shifted),
-                    self.bars.source.connect(self.videophy.sink),
-                ]
+                    self.comb += [
+                        self.vtg.source.connect(self.bars.vtg_sink, omit={"vsync"}),
+                        self.bars.vtg_sink.vsync.eq(vsync_shifted),
+                        self.bars.source.connect(self.videophy.sink),
+                    ]
+
+                elif hdmi_pattern == "bars":
+                    from patterns import BarsRenderer
+
+                    # 1) Instancia el VTG y el PHY HDMI
+                    self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@60Hz")
+                    self.submodules.videophy = VideoGowinHDMIPHY(
+                        platform.request("hdmi"),
+                        clock_domain="hdmi"
+                    )
+
+                    # 2) Crea el renderer de barras con datos válidos (8 tiles, 16x16 cada uno)
+                    base_colors = [
+                        0x000000, 0xFF0000, 0x00FF00, 0x0000FF,
+                        0xFFFF00, 0xFF00FF, 0x00FFFF, 0xFFFFFF
+                    ]
+
+                    tile_rom_data = []
+                    for color in base_colors:
+                        tile_rom_data += [color] * (16 * 16)  # 256 píxeles por tile
+
+                    self.submodules.bars = ClockDomainsRenamer("hdmi")(
+                        BarsRenderer(tile_rom_data, screen_w=640, screen_h=480, tile_w=16, tile_h=16)
+                    )
+
+                    # 3) Conecta toda la cadena
+                    self.comb += [
+                        self.vtg.source.connect(self.bars.vtg_sink),
+                        self.bars.source.connect(self.videophy.sink),
+                    ]
+
+
+                elif hdmi_pattern == "sprite":
+                    from patterns import MovingSpritePatternFromFile
+                    self.videophy = VideoGowinHDMIPHY(platform.request("hdmi"), clock_domain="hdmi")
+                    self.submodules.vtg = VideoTimingGenerator(default_video_timings="640x480@75Hz")
+
+                    self.submodules.sprite_pattern = MovingSpritePatternFromFile(
+                        hres=640,
+                        vres=480
+                    )
+
+                    self.comb += [
+                        self.vtg.source.connect(self.sprite_pattern.vtg_sink),
+                        self.sprite_pattern.source.connect(self.videophy.sink)
+                    ]
+                elif hdmi_pattern == "tilemap":
+                    from patterns import TilemapRenderer
+
+                    # 1) Instancia el VTG y el PHY HDMI
+                    self.submodules.vtg     = VideoTimingGenerator(default_video_timings="640x480@60Hz")
+                    self.submodules.videophy= VideoGowinHDMIPHY(platform.request("hdmi"),
+                                                                clock_domain="hdmi")
+
+                    # 2) Después, carga tu tiles.mem y crea el renderer
+                    with open("tiles.mem") as f:
+                        tile_rgb_data = [int(l.strip(), 16) for l in f if l.strip()]
+
+                    self.submodules.bars = ClockDomainsRenamer("hdmi")(
+                        TilemapRenderer(
+                            tile_rgb_data,
+                            screen_w=640, screen_h=480,
+                            tile_w=16,   tile_h=16
+                        )
+                    )
+
+                    # 3) Ahora desplaza VSYNC y conecta toda la cadena
+                    vsync_shifted = Signal()
+                    self.sync.hdmi += vsync_shifted.eq(self.vtg.source.vsync)
+
+                    self.comb += [
+                        self.vtg.source.connect(self.bars.vtg_sink, omit={"vsync"}),
+                        self.bars.vtg_sink.vsync.eq(vsync_shifted),
+                        self.bars.source.connect(self.videophy.sink),
+                    ]
+                else:
+                    raise ValueError("Unsupported HDMI pattern: {}".format(hdmi_pattern))
 
         if with_led_chaser:
             self.leds = LedChaser(
@@ -136,6 +216,7 @@ def main():
     parser.add_target_argument("--with-spi-sdcard", action="store_true", help="Enable SPI-mode SDCard support.")
     parser.add_target_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (HDMI).")
     parser.add_target_argument("--prog-kit", default="openfpgaloader", help="Programmer select from Gowin/openFPGALoader.")
+    parser.add_target_argument("--hdmi-pattern", default="bars", choices=["bars", "sprite","c","tilemap"], help="HDMI pattern to display.")
     args = parser.parse_args()
 
     soc = BaseSoC(
@@ -143,6 +224,7 @@ def main():
         sys_clk_freq=args.sys_clk_freq,
         bios_flash_offset=int(args.bios_flash_offset, 0),
         with_video_terminal=args.with_video_terminal,
+        hdmi_pattern=args.hdmi_pattern,
         **parser.soc_argdict
     )
 
