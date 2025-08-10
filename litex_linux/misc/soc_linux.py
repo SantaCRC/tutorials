@@ -84,6 +84,22 @@ def SoCLinux(soc_cls, **kwargs):
                     polling     = False,
                     root_device = rootfs
                 )
+                
+                # Add voltage regulator for MMC if needed
+                if "vmmc-supply = <&vreg_mmc>;" in dts_content and "vreg_mmc:" not in dts_content:
+                    # Find the position to insert the regulator (after chosen block)
+                    chosen_end = dts_content.find("};", dts_content.find("chosen {")) + 2
+                    regulator_def = """
+        vreg_mmc: vreg_mmc {
+            compatible = "regulator-fixed";
+            regulator-name = "vreg_mmc";
+            regulator-min-microvolt = <3300000>;
+            regulator-max-microvolt = <3300000>;
+            regulator-always-on;
+        };
+"""
+                    dts_content = dts_content[:chosen_end] + regulator_def + dts_content[chosen_end:]
+                
                 dts_file.write(dts_content)
 
         # DTS compilation --------------------------------------------------------------------------

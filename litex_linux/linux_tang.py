@@ -71,7 +71,7 @@ def main():
     board = board_classes[board_name]()
     soc_kwargs = Board.soc_kwargs.copy()
     soc_kwargs.pop("ident", None)
-    soc_kwargs["ident"] = "Tang Nano 20K Linux SoC by Fabian Alvarez (SantaCRC)"
+    #soc_kwargs["ident"] = "Tang Nano 20K Linux SoC by Fabian Alvarez (SantaCRC)"
 
 
 
